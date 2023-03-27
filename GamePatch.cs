@@ -53,13 +53,55 @@ namespace BossRush
         }
     }
 
-    //Resets the data if mission is quit.
-    [HarmonyPatch(typeof(OptionsManager), nameof(OptionsManager.QuitMission))]
-    public static class QuitMissionPatch
+    //Disables boss rush if mission is quit, if hardcore is enabled, restarting mission will send the player back to the start.
+    [HarmonyPatch(typeof(OptionsManager))]
+    public static class OptionsManagerFixes
     {
+
+        [HarmonyPostfix]
+        [HarmonyPatch(nameof(OptionsManager.QuitMission))]
         public static void Postfix()
         {
             BossRushController.Reset();
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(nameof(OptionsManager.RestartMission))]
+        public static bool Prefix()
+        {
+            if (!BossRushController.BossRushMode)
+                return true;
+
+
+            if(BossRushController.HardcoreMode)
+            {
+                BossRushController.StartBossRushMode(true);
+                return false;
+            }
+
+            BossRushController.Deaths++;
+
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(StatsManager))]
+    public static class StasManagerPatch
+    {
+        [HarmonyPostfix]
+        [HarmonyPatch(nameof(StatsManager.Restart))]
+        public static void Postfix()
+        {
+            if (!BossRushController.BossRushMode)
+                return;
+
+            if (BossRushController.HardcoreMode)
+            {
+                BossRushController.StartBossRushMode(true);
+                return;
+            }
+
+            BossRushController.Deaths++;
         }
     }
 
@@ -70,7 +112,10 @@ namespace BossRush
         [HarmonyPatch(nameof(NewMovement.GetHurt))]
         public static bool Prefix(NewMovement __instance, int damage, bool invincible)
         {
-            if (!BossRushController.HardcoreMode || __instance.gameObject.layer != 15 || damage <= 0 || !BossRushController.BossRushMode)
+            if (!BossRushController.HardcoreMode || !BossRushController.BossRushMode)
+                return true;
+
+            if (__instance.gameObject.layer == 15)
                 return true;
 
             //Restart if hardcore and dead
@@ -81,16 +126,6 @@ namespace BossRush
             }
 
             return true;
-        }
-
-        [HarmonyPostfix]
-        [HarmonyPatch(nameof(NewMovement.Respawn))]
-        public static void Postfix(NewMovement __instance)
-        {
-            if (!BossRushController.BossRushMode)
-                return;
-
-            ++BossRushController.Deaths;
         }
     }
 
