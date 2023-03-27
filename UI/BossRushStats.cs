@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-using UnityEngine;
-using UnityEngine.Scripting;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace BossRush.UI
@@ -13,9 +8,7 @@ namespace BossRush.UI
         [SerializeField] Text timeText, lapsText, modeText, deathText;
         [SerializeField] Transform container, deathCounter, modeDisplay;
 
-        internal static GameObject LevelStatsUI;
-
-        private bool uiOpen;
+        internal static GameObject UK_LevelStatsObject;
 
         private void Start()
         {
@@ -24,23 +17,22 @@ namespace BossRush.UI
 
         private void Update()
         {
-            uiOpen = CheckOpenState();
+            bool displayStatsUI = CheckOpenState();
 
-            container?.gameObject?.SetActive(uiOpen);
+            container?.gameObject?.SetActive(displayStatsUI);
 
-            if(!uiOpen)
-            {
+            if (!displayStatsUI)
                 return;
-            }
-
+            
             UpdateLapText();
             UpdateTimeText();
             UpdateThirdStat();
         }
 
+        //Should the stats UI be displayed?
         private bool CheckOpenState()
         {
-            if (LevelStatsUI == null)
+            if (UK_LevelStatsObject == null) //Probably not in a level, this should become filled when we load into a level.
                 return false;
 
             if (!BossRushController.BossRushMode)
@@ -49,7 +41,7 @@ namespace BossRush.UI
             if (BossRushConfig.AlwaysShowStats.Value)
                 return true;
 
-            return LevelStatsUI.gameObject.activeInHierarchy;
+            return UK_LevelStatsObject.gameObject.activeInHierarchy;
         }
 
         private void UpdateTimeText()
@@ -64,10 +56,11 @@ namespace BossRush.UI
         {
             if (lapsText == null)
                 return;
-         
+
             lapsText.text = BossRushController.Laps.ToString("000");
         }
 
+        //Shows either death counter or hardcore mode depending on which mode is being played.
         private void UpdateThirdStat()
         {
             bool hardcore = BossRushController.HardcoreMode;
@@ -93,8 +86,8 @@ namespace BossRush.UI
 
         private string GetTimeString(float timeInSeconds)
         {
-            int hours = (int) Modulate(ref timeInSeconds, 3600);
-            int minutes = (int) Modulate(ref timeInSeconds, 60);
+            int hours = (int)Modulate(ref timeInSeconds, 3600);
+            int minutes = (int)Modulate(ref timeInSeconds, 60);
             float seconds = timeInSeconds;
 
             return $"{hours.ToString("00")}:{minutes.ToString("00")}:{(seconds.ToString("00.00"))}";
@@ -103,10 +96,8 @@ namespace BossRush.UI
         private float Modulate(ref float number, float modulationAmount)
         {
             float modulation = number % modulationAmount;
-
-            float deduction = (number-modulation)/modulationAmount;
-
-            number -= (deduction*modulationAmount);
+            float deduction = (number - modulation) / modulationAmount;
+            number -= (deduction * modulationAmount);
 
             return deduction;
         }

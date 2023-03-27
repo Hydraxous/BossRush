@@ -2,8 +2,8 @@
 using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace BossRush
 {
@@ -20,9 +20,10 @@ namespace BossRush
             { "Level 6-1", "Level 6-2"}, //Leviathan -> Gabriel 2
             { "Intermission2", "Level P-1"}, //Gabriel 2 -> Minos Prime
             { "Level 3-2", "Level P-2" }, //Minos Prime -> Sisyphus Prime
-            { "Level 6-2", "Level 0-5" }, //Sisyphus Prime -> Cerb LOOP
+            { "Level 6-2", "Level 0-5" }, //Sisyphus Prime --Lap-> Cerb
         };
 
+        //Hijack the target level from FinalRank when exiting a level and swap it with the one we want.
         public static bool Prefix(FinalRank __instance)
         {
             if (BossRushController.BossRushMode && !SceneHelper.IsPlayingCustom)
@@ -31,29 +32,31 @@ namespace BossRush
             return true;
         }
 
+        //Gets the next boss level from the dictionary, if its not present, returns original.
         public static string ResolveLevelName(string targetLevel)
         {
-            string nextLevel = targetLevel;
-
-            if(levelAssociations.ContainsKey(targetLevel))
+            if (levelAssociations.ContainsKey(targetLevel))
             {
-                nextLevel = levelAssociations[targetLevel];
-                if(nextLevel == "Level 0-5")
-                {
+                string nextLevel = levelAssociations[targetLevel];
+                //Level 0-5 indicates the player has just completed P-2
+                if (nextLevel == "Level 0-5")
                     ++BossRushController.Laps;
-                }
-            }else
-            {
-                HudMessageReceiver.Instance.SendHudMessage("Sequence broken, boss rush mode disabled.");
-                BossRushController.Reset();
+
+                return nextLevel;
             }
-            return nextLevel;
+
+            //This can happen if the player enters a secret level pit
+            HudMessageReceiver.Instance.SendHudMessage("Sequence broken, boss rush mode disabled.");
+            BossRushController.Reset();
+
+            return targetLevel;
         }
     }
 
+    //Resets the data if mission is quit.
     [HarmonyPatch(typeof(OptionsManager), nameof(OptionsManager.QuitMission))]
     public static class QuitMissionPatch
-    { 
+    {
         public static void Postfix()
         {
             BossRushController.Reset();
@@ -68,12 +71,10 @@ namespace BossRush
         public static bool Prefix(NewMovement __instance, int damage, bool invincible)
         {
             if (!BossRushController.HardcoreMode || __instance.gameObject.layer != 15 || damage <= 0 || !BossRushController.BossRushMode)
-            {
                 return true;
-            }
 
-            //Restart if hardcore and died :p
-            if(__instance.hp - damage <= 0)
+            //Restart if hardcore and dead
+            if (__instance.hp - damage <= 0)
             {
                 BossRushController.StartBossRushMode(true);
                 return false;
@@ -86,22 +87,22 @@ namespace BossRush
         [HarmonyPatch(nameof(NewMovement.Respawn))]
         public static void Postfix(NewMovement __instance)
         {
-            if(!BossRushController.BossRushMode)
+            if (!BossRushController.BossRushMode)
                 return;
 
             ++BossRushController.Deaths;
         }
     }
 
+
+    //For laps, difficulty is increased via radiance.
     [HarmonyPatch(typeof(EnemyIdentifier), "Start")]
     public static class EnemyDifficultyUpPatch
     {
         public static void Postfix(EnemyIdentifier __instance)
         {
-            if(BossRushController.Laps <= 0 || !BossRushController.BossRushMode)
-            {
+            if (BossRushController.Laps <= 0 || !BossRushController.BossRushMode)
                 return;
-            }
 
             __instance.healthBuff = BossRushConfig.EnemyHealthBuff.Value;
             __instance.speedBuff = BossRushConfig.EnemySpeedBuff.Value;
@@ -111,78 +112,85 @@ namespace BossRush
         }
     }
 
-    //Set the ui object to be watched.
+    //Set the ui object to be watched for the boss rush stats UI
+    //LevelStatsUI is watched if it is active and can potentially control if our BossRush stats are displayed based on the mod config
     [HarmonyPatch(typeof(LevelStatsEnabler), "Start")]
     public static class StatsPatch
     {
         public static void Postfix(LevelStatsEnabler __instance)
         {
-            BossRushStats.LevelStatsUI = __instance.transform.GetChild(0).gameObject;
+            BossRushStats.UK_LevelStatsObject = __instance.transform.GetChild(0).gameObject;
         }
     }
 
+    //Adds our modded menu and button to the game's Main Menu
     [HarmonyPatch(typeof(CanvasController), "Awake")]
-    public static class BossRushButtonPatch
+    public static class MainMenuUIPatch
     {
         public static void Postfix(CanvasController __instance)
         {
-
             if (SceneManager.GetActiveScene().name != "Main Menu")
                 return;
 
             SpawnMenu(__instance);
-            SpawnButton(__instance);           
+            SpawnButton(__instance);
         }
-        
+
+        //Instantiates the Boss Rush Menu
         private static void SpawnMenu(CanvasController __instance)
         {
-            RectTransform rt = __instance.GetComponent<RectTransform>();
-            if (rt == null)
+            RectTransform canvasRectTransform = __instance.GetComponent<RectTransform>();
+
+            if (canvasRectTransform == null)
                 return;
 
-            GameObject.Instantiate(Assets.BossRushMenuPrefab, rt);
+            GameObject.Instantiate(Assets.BossRushMenuPrefab, canvasRectTransform);
         }
 
+
+        //Duplicates sandbox button and configures it to open Boss rush menu
+        //Kind of icky but it works.
         private static void SpawnButton(CanvasController __instance)
         {
-            RectTransform rt = __instance.GetComponent<RectTransform>();
-            GameObject chapterSelect = rt.Find("Chapter Select").gameObject;
-            if (chapterSelect == null)
+            RectTransform canvasRectTransform = __instance.GetComponent<RectTransform>();
+            GameObject chapterSelectObject = canvasRectTransform.Find("Chapter Select").gameObject;
+            if (chapterSelectObject == null)
             {
-                Debug.Log("chap null");
+                Debug.LogError("Chapter Select object is null");
                 return;
             }
 
-            BossRushMenu.SetLastPage(chapterSelect);
-            RectTransform chap_rt = chapterSelect.GetComponent<RectTransform>();
-            GameObject sandboxButton = chapterSelect.transform.Find("Sandbox").gameObject;
+            BossRushMenu.SetLastPage(chapterSelectObject);
+            RectTransform chapterSelectRectTransform = chapterSelectObject.GetComponent<RectTransform>();
+            GameObject sandboxButtonObject = chapterSelectObject.transform.Find("Sandbox").gameObject;
 
-            if (sandboxButton == null)
+            if (sandboxButtonObject == null)
             {
-                Debug.Log("chap null");
+                Debug.LogError("Sandbox button is null");
                 return;
             }
 
-            GameObject bossRushButtonGO = GameObject.Instantiate(sandboxButton, chap_rt);
-            bossRushButtonGO.name = "Boss Rush Button";
-            Button bossRushButton = bossRushButtonGO.GetComponent<Button>();
+            GameObject bossRushButtonObject = GameObject.Instantiate(sandboxButtonObject, chapterSelectRectTransform);
+            bossRushButtonObject.name = "Boss Rush Button";
+            Button sandboxButton = bossRushButtonObject.GetComponent<Button>();
 
-            ColorBlock colors = bossRushButton.colors;
-            GameObject.DestroyImmediate(bossRushButton);
+            ColorBlock oldColorBlock = sandboxButton.colors;
+            //Have to destroy old button component because of Unity's persistent listener calls.
+            //They can't be removed at runtime so the component must be replaced.
+            GameObject.DestroyImmediate(sandboxButton);
 
-            Button newButton = bossRushButtonGO.AddComponent<Button>();
-            newButton.colors = colors;
+            Button bossRushButton = bossRushButtonObject.AddComponent<Button>();
+            bossRushButton.colors = oldColorBlock;
 
 
-            RectTransform bossRush_rt = bossRushButtonGO.GetComponent<RectTransform>();
+            RectTransform bossRushButtonRectTransform = bossRushButtonObject.GetComponent<RectTransform>();
 
-            Vector3 currentPos = bossRush_rt.position;
-            currentPos.y -= 55;
-            bossRush_rt.position = currentPos;
+            Vector3 buttonPosition = bossRushButtonRectTransform.position;
+            buttonPosition.y -= 55;
+            bossRushButtonRectTransform.position = buttonPosition;
 
-            bossRush_rt.GetComponentInChildren<Text>().text = "BOSS RUSH";
-
-            newButton.onClick.AddListener(BossRushMenu.Open);
+            bossRushButtonRectTransform.GetComponentInChildren<Text>().text = "BOSS RUSH";
+            bossRushButton.onClick.AddListener(BossRushMenu.Open);
         }
     }
 

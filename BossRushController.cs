@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace BossRush
 {
@@ -14,19 +11,20 @@ namespace BossRush
 
         private static float startTime;
 
+        //Returns time since the Boss Rush started.
         public static float TimeElapsed
         {
             get
             {
                 float currentTime = Time.time;
-                if(!BossRushMode)
-                {
+                if (!BossRushMode)
                     startTime = currentTime;
-                }
+
                 return currentTime - startTime;
             }
         }
 
+        //Starts Boss Rush mode.
         public static void StartBossRushMode(bool hardcore = false)
         {
             Reset();
@@ -35,6 +33,7 @@ namespace BossRush
             SceneHelper.LoadScene("Level 0-5");
         }
 
+        //Resets stats and info
         public static void Reset()
         {
             BossRushMode = false;

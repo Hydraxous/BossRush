@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace BossRush.UI
@@ -9,7 +6,6 @@ namespace BossRush.UI
     public class BossRushMenu : MonoBehaviour
     {
         public static BossRushMenu Instance;
-
 
         [SerializeField] GameObject menuScreen;
         [SerializeField] Text hardcoreModeText;
@@ -22,21 +18,24 @@ namespace BossRush.UI
         private void Awake()
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
             menuEsc = menuScreen?.AddComponent<MenuEsc>();
+            hardcoreMode = BossRushController.HardcoreMode;
         }
 
+        //Linked to Boss Rush UI in menu
         public void StartBossRush()
         {
             BossRushController.StartBossRushMode(hardcoreMode);
         }
 
+        //Linked to the hardcore mode button in the menu
         public void ToggleHardcoreMode()
         {
             hardcoreMode = !hardcoreMode;
             UpdateHardcoreText();
         }
 
+        //Used for closing the UI when pressing ESCAPE
         public static void SetLastPage(GameObject chapter)
         {
             lastPage = chapter;
@@ -47,14 +46,12 @@ namespace BossRush.UI
             lastPage?.SetActive(false);
 
             Refresh();
-            if(!onViolent)
-            {
+
+            //If the player isnt playing on Violent, hardcore mode is not applicable, so we dont need to show the menu.
+            if (!onViolent)
                 StartBossRush();
-            }
             else
-            {
                 menuScreen?.SetActive(true);
-            }
         }
 
         public static void Open()
@@ -70,29 +67,28 @@ namespace BossRush.UI
 
         private bool onViolent;
 
+
+        //Updates fields and displayed information also detects current difficulty
         public void Refresh()
         {
-            if(lastPage != null)
-            {
+            if (lastPage != null)
                 menuEsc.previousPage = lastPage;
-            }
 
             onViolent = (PrefsManager.Instance.GetInt("difficulty") >= 3);
 
-            if(!onViolent)
-            {
+            if (!onViolent)
                 hardcoreMode = false;
-            }
 
             UpdateHardcoreText();
         }
 
+        //Visual indicator of hardcore mode
         private void UpdateHardcoreText()
         {
             if (hardcoreModeText == null)
                 return;
 
-            hardcoreModeText.color = (hardcoreMode) ? Color.red : new Color(0.3f,0f,0f,1.0f);
+            hardcoreModeText.color = (hardcoreMode) ? Color.red : new Color(0.3f, 0f, 0f, 1.0f);
         }
     }
 }
