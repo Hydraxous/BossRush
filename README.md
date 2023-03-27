@@ -1,5 +1,5 @@
 # Boss Rush
-Adds a new Boss Rush gamemode to ULTRAKILL
+Adds a new Boss Rush gamemode to ULTRAKILL.
 Fight every boss level in sequence, then do it again but harder.
 Each lap increases difficulty using radiance, which can be tuned in the mod config.
 
