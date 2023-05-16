@@ -20,6 +20,7 @@ namespace BossRush.UI
             Instance = this;
             menuEsc = menuScreen?.AddComponent<MenuEsc>();
             hardcoreMode = BossRushController.HardcoreMode;
+            menuScreen?.SetActive(false);
         }
 
         //Linked to Boss Rush UI in menu
@@ -46,12 +47,8 @@ namespace BossRush.UI
             lastPage?.SetActive(false);
 
             Refresh();
-
-            //If the player isnt playing on Violent, hardcore mode is not applicable, so we dont need to show the menu.
-            if (!onViolent)
-                StartBossRush();
-            else
-                menuScreen?.SetActive(true);
+                
+            menuScreen?.SetActive(true);
         }
 
         public static void Open()
@@ -73,11 +70,6 @@ namespace BossRush.UI
         {
             if (lastPage != null)
                 menuEsc.previousPage = lastPage;
-
-            onViolent = (PrefsManager.Instance.GetInt("difficulty") >= 3);
-
-            if (!onViolent)
-                hardcoreMode = false;
 
             UpdateHardcoreText();
         }

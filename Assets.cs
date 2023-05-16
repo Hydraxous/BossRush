@@ -7,6 +7,7 @@ namespace BossRush
         public static GameObject BossRushStatsPrefab { get; private set; }
         public static GameObject BossRushMenuPrefab { get; private set; }
 
+        public static GameObject BossRushDeathScreen { get; private set; }
 
         public static AssetBundle assets;
 
@@ -16,6 +17,7 @@ namespace BossRush
 
             BossRushStatsPrefab = assets.LoadAsset<GameObject>("BossRushStatsDisplay");
             BossRushMenuPrefab = assets.LoadAsset<GameObject>("BossRushMenu");
+            BossRushDeathScreen = assets.LoadAsset<GameObject>("BossRushDeathScreen");
         }
 
 

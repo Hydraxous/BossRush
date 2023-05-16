@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace BossRush
 {
-    [HarmonyPatch(typeof(FinalRank), nameof(FinalRank.StartLoadingNextLevel))]
+    [HarmonyPatch(typeof(FinalRank), nameof(FinalRank.LevelChange))]
     public static class FinalRankPatch
     {
         private static Dictionary<string, string> levelAssociations = new Dictionary<string, string>()
@@ -35,12 +35,16 @@ namespace BossRush
         //Gets the next boss level from the dictionary, if its not present, returns original.
         public static string ResolveLevelName(string targetLevel)
         {
+
             if (levelAssociations.ContainsKey(targetLevel))
             {
                 string nextLevel = levelAssociations[targetLevel];
                 //Level 0-5 indicates the player has just completed P-2
                 if (nextLevel == "Level 0-5")
+                {
                     ++BossRushController.Laps;
+                    StatRecords.SubmitRecord(BossRushController.GetCurrentStat());
+                }
 
                 return nextLevel;
             }
@@ -97,7 +101,7 @@ namespace BossRush
 
             if (BossRushController.HardcoreMode)
             {
-                BossRushController.StartBossRushMode(true);
+                BossRushDeathScreen.Instance.Open();
                 return;
             }
 
@@ -121,7 +125,14 @@ namespace BossRush
             //Restart if hardcore and dead
             if (__instance.hp - damage <= 0)
             {
-                BossRushController.StartBossRushMode(true);
+                try
+                {
+                    BossRushDeathScreen.Instance.Open();
+                } catch (System.Exception e)
+                {
+                    Debug.LogException(e);
+                    return true;
+                }
                 return false;
             }
 
@@ -164,11 +175,13 @@ namespace BossRush
     {
         public static void Postfix(CanvasController __instance)
         {
-            if (SceneManager.GetActiveScene().name != "Main Menu")
-                return;
+            SpawnDeathScreen(__instance);
 
-            SpawnMenu(__instance);
-            SpawnButton(__instance);
+            if (SceneHelper.CurrentScene == "Main Menu")
+            {
+                SpawnMenu(__instance);
+                SpawnButton(__instance);
+            }
         }
 
         //Instantiates the Boss Rush Menu
@@ -179,7 +192,19 @@ namespace BossRush
             if (canvasRectTransform == null)
                 return;
 
+            BossRush.Logr.LogInfo("Menu Spawned");
             GameObject.Instantiate(Assets.BossRushMenuPrefab, canvasRectTransform);
+        }
+
+        private static void SpawnDeathScreen(CanvasController __instance)
+        {
+            RectTransform canvasRectTransform = __instance.GetComponent<RectTransform>();
+
+            if (canvasRectTransform == null)
+                return;
+
+            BossRush.Logr.LogInfo("DeathScreen Spawned");
+            GameObject.Instantiate(Assets.BossRushDeathScreen, canvasRectTransform);
         }
 
 
@@ -187,6 +212,7 @@ namespace BossRush
         //Kind of icky but it works.
         private static void SpawnButton(CanvasController __instance)
         {
+            BossRush.Logr.LogInfo("Spawning Button");
             RectTransform canvasRectTransform = __instance.GetComponent<RectTransform>();
             GameObject chapterSelectObject = canvasRectTransform.Find("Chapter Select").gameObject;
             if (chapterSelectObject == null)

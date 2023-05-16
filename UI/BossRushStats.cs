@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace BossRush.UI
@@ -7,12 +8,15 @@ namespace BossRush.UI
     {
         [SerializeField] Text timeText, lapsText, modeText, deathText;
         [SerializeField] Transform container, deathCounter, modeDisplay;
+        [SerializeField] private GameObject newScoreFlash;
 
         internal static GameObject UK_LevelStatsObject;
 
         private void Start()
         {
             DontDestroyOnLoad(gameObject);
+            StatRecords.OnNewHighScore += (_) => FlashNewScore();
+            newScoreFlash.SetActive(false);
         }
 
         private void Update()
@@ -27,6 +31,35 @@ namespace BossRush.UI
             UpdateLapText();
             UpdateTimeText();
             UpdateThirdStat();
+        }
+        
+        private bool flashing = false;
+        private void FlashNewScore()
+        {
+            if(!flashing)
+            {
+                flashing = true;
+                //play a sound
+                StartCoroutine(FlashNewHighScoreText());
+            }
+        }
+        
+        private IEnumerator FlashNewHighScoreText()
+        {
+            newScoreFlash.SetActive(true);
+            int flashTimes = 15;
+            while(flashTimes > 0)
+            {
+                newScoreFlash.SetActive(true);
+                yield return new WaitForSecondsRealtime(0.25f);
+                newScoreFlash.SetActive(false);
+                yield return new WaitForSecondsRealtime(0.25f);
+                --flashTimes;
+            }
+
+            newScoreFlash.SetActive(false);
+
+            flashing = false;
         }
 
         //Should the stats UI be displayed?
@@ -49,7 +82,7 @@ namespace BossRush.UI
             if (timeText == null)
                 return;
 
-            timeText.text = GetTimeString(BossRushController.TimeElapsed);
+            timeText.text = StringHelper.GetTimeString(BossRushController.TimeElapsed);
         }
 
         private void UpdateLapText()
@@ -82,24 +115,6 @@ namespace BossRush.UI
 
                 deathText.text = BossRushController.Deaths.ToString("000");
             }
-        }
-
-        private string GetTimeString(float timeInSeconds)
-        {
-            int hours = (int)Modulate(ref timeInSeconds, 3600);
-            int minutes = (int)Modulate(ref timeInSeconds, 60);
-            float seconds = timeInSeconds;
-
-            return $"{hours.ToString("00")}:{minutes.ToString("00")}:{(seconds.ToString("00.00"))}";
-        }
-
-        private float Modulate(ref float number, float modulationAmount)
-        {
-            float modulation = number % modulationAmount;
-            float deduction = (number - modulation) / modulationAmount;
-            number -= (deduction * modulationAmount);
-
-            return deduction;
         }
 
         public static void Spawn()

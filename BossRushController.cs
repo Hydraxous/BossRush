@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace BossRush
 {
@@ -10,6 +11,8 @@ namespace BossRush
         public static int Deaths { get; internal set; }
 
         private static float startTime;
+
+        public static long StartTimeEpoc { get; internal set; }
 
         //Returns time since the Boss Rush started.
         public static float TimeElapsed
@@ -38,9 +41,16 @@ namespace BossRush
         {
             BossRushMode = false;
             HardcoreMode = false;
+            StatRecords.HighScoreRun = false;
             startTime = Time.time;
+            StartTimeEpoc = DateTimeOffset.Now.ToUnixTimeSeconds();
             Deaths = 0;
             Laps = 0;
+        }
+
+        public static BossRushRecord GetCurrentStat()
+        {
+            return new BossRushRecord(Laps, TimeElapsed, Deaths, HardcoreMode);
         }
     }
 }
