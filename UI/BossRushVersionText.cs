@@ -17,7 +17,7 @@ namespace BossRush.UI
 
         private void OnEnable()
         {
-            text.text = $"{ConstInfo.NAME} - {BossRush.VersionName} - {((BossRush.LatestVersion) ? "(<color=green>Latest</color>)" : "(<color=red>Update Available</color>)")}";
+            text.text = $"{ConstInfo.NAME} - {ConstInfo.VERSION} - {((BossRush.LatestVersion) ? "(<color=green>Latest</color>)" : "(<color=red>Update Available</color>)")}";
         }
     }
 }
