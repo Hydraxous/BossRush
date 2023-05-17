@@ -50,8 +50,8 @@ namespace BossRush.UI
             deathText.text = "";
 
             int currentLaps = 0;
-            float lapTime = 1.5f / current.laps;
-            while(currentLaps < current.laps+1 && !skip)
+            float lapTime = 1.5f / ((current.laps == 0) ? 1 : current.laps);
+            while (currentLaps < current.laps+1 && !skip)
             {
                 lapText.text = currentLaps.ToString("000");
                 yield return new WaitForSecondsRealtime(lapTime);
@@ -76,7 +76,7 @@ namespace BossRush.UI
 
 
             int currentDeaths = 0;
-            float deathTime = 1.5f/((current.deaths == 0)? Mathf.Epsilon : current.deaths);
+            float deathTime = 1.5f/((current.deaths == 0) ? 1 : current.deaths);
             while (currentDeaths < current.deaths && !skip)
             {
                 deathText.text = currentDeaths.ToString("000");
