@@ -20,7 +20,9 @@ namespace BossRush
             { "Level 6-1", "Level 6-2"}, //Leviathan -> Gabriel 2
             { "Intermission2", "Level P-1"}, //Gabriel 2 -> Minos Prime
             { "Level 3-2", "Level P-2" }, //Minos Prime -> Sisyphus Prime
-            { "Level 6-2", "Level 0-5" }, //Sisyphus Prime --Lap-> Cerb
+            { "Level 6-2", "Level 7-1" }, //Sisyphus Prime -> Minotaur
+            { "Level 7-1", "Level 7-4" }, //Minotaur -> Centaur
+            { "Level 7-4", "Level 0-5" } //Centaur -lap-> Cerb
         };
 
         //Hijack the target level from FinalRank when exiting a level and swap it with the one we want.
