@@ -15,7 +15,7 @@ namespace BossRush
         public static string VersionName { get; private set; }
         Harmony harmony;
 
-        private bool debug = true;
+        private bool debug = false;
 
         private void Awake()
         {
