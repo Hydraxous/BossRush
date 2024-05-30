@@ -33,7 +33,7 @@ namespace BossRush
             Reset();
             BossRushMode = true;
             HardcoreMode = hardcore;
-            SceneHelper.LoadScene("Level 0-5");
+            SceneHelper.LoadScene(LevelChainManager.GetFirstLevelName());
         }
 
         //Resets stats and info

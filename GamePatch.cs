@@ -20,12 +20,13 @@ namespace BossRush
                 if(chain == null)
                 {
                     //Level has no chain!? What?
-                    BossRush.BepInExLogger.LogWarning($"Level {SceneHelper.CurrentScene} has no valid chain.");
+                    BossRush.BepInExLogger.LogWarning($"Scene ({SceneHelper.CurrentScene}) has no valid chain.");
                     return true;
                 }
 
                 if (!string.IsNullOrEmpty(chain.PitTargetFilter) && __instance.targetLevelName != chain.PitTargetFilter)
                 {
+                    BossRush.BepInExLogger.LogInfo($"Player entering level {__instance.targetLevelName} when the level chain expected {chain.PitTargetFilter}. Boss Rush will now be disabled.");
                     //This can happen if the player enters a secret level pit
                     HudMessageReceiver.Instance.SendHudMessage("Sequence broken, boss rush mode disabled.");
                     BossRushController.Reset();
