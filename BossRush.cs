@@ -2,34 +2,38 @@
 using BepInEx.Logging;
 using BossRush.UI;
 using HarmonyLib;
-using HydraDynamics;
 using UnityEngine;
 
 namespace BossRush
 {
-    [BepInDependency("Hydraxous.HydraDynamics", BepInDependency.DependencyFlags.HardDependency)]
-    [HydynamicsInfo(ConstInfo.NAME, ConstInfo.GUID, "Boss Rush Gamdemode")]
     [BepInPlugin(ConstInfo.GUID, ConstInfo.NAME, ConstInfo.VERSION)]
     public class BossRush : BaseUnityPlugin
     {
         public static BossRush Instance { get; private set; }
-        public static ManualLogSource Logr => Instance.Logger;
+        public static ManualLogSource BepInExLogger => Instance.Logger;
         public static bool LatestVersion { get; private set; }
         public static string VersionName { get; private set; }
         Harmony harmony;
 
-        private bool debug = false;
+        private bool debug = true;
 
         private void Awake()
         {
             Instance = this;
             BossRushConfig.Bind();
-            Logger.LogInfo("Boss Rush loaded!");
-            VersionCheck.CheckVersion(ConstInfo.GITHUB_URL, ConstInfo.VERSION, VersionCheckCallback);
+
+            BossRushPaths.CheckFolders();
+            LevelChainManager.LoadLevelChainTable();
+            StatRecords.LoadRecords();
+
             harmony = new Harmony(ConstInfo.GUID + ".harmony");
             harmony.PatchAll();
             Assets.LoadAssets();
             BossRushStats.Spawn();
+
+            VersionCheck.CheckVersion(ConstInfo.GITHUB_URL, ConstInfo.VERSION, VersionCheckCallback);
+
+            Logger.LogInfo($"Boss Rush {ConstInfo.VERSION} loaded!");
         }
 
         private void Update()
@@ -47,11 +51,11 @@ namespace BossRush
                 VersionName = ConstInfo.VERSION;
             }
 
-            if(LatestVersion)
+            if (LatestVersion)
                 Debug.Log($"BOSSRUSH: You are using the latest version of BossRush ({VersionName}).");
             else
                 Debug.LogWarning($"BOSSRUSH: You are using an outdated version of BossRush ({ConstInfo.VERSION}). Please consider updating to {VersionName}");
-            
+
         }
 
         private void CheckDebugInputs()

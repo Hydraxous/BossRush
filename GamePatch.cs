@@ -1,8 +1,8 @@
 ﻿using BossRush.UI;
 using HarmonyLib;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace BossRush
@@ -10,52 +10,41 @@ namespace BossRush
     [HarmonyPatch(typeof(FinalRank), nameof(FinalRank.LevelChange))]
     public static class FinalRankPatch
     {
-        private static Dictionary<string, string> levelAssociations = new Dictionary<string, string>()
-        {
-            { "Level 1-1", "Level 1-4"}, //Cerb -> V2
-            { "Level 2-1", "Level 2-4"}, //V2 -> Minos Corpse
-            { "Level 3-1", "Level 3-2" }, //Minos Corpse -> Gabriel
-            { "Intermission1", "Level 4-4" }, //Gabriel -> V2
-            { "Level 5-1", "Level 5-4" }, //V2 -> Leviathan
-            { "Level 6-1", "Level 6-2"}, //Leviathan -> Gabriel 2
-            { "Intermission2", "Level P-1"}, //Gabriel 2 -> Minos Prime
-            { "Level 3-2", "Level P-2" }, //Minos Prime -> Sisyphus Prime
-            { "Level 6-2", "Level 7-1" }, //Sisyphus Prime -> Minotaur
-            { "Level 7-1", "Level 7-4" }, //Minotaur -> Centaur
-            { "Level 7-4", "Level 0-5" } //Centaur -lap-> Cerb
-        };
-
         //Hijack the target level from FinalRank when exiting a level and swap it with the one we want.
         public static bool Prefix(FinalRank __instance)
         {
             if (BossRushController.BossRushMode && !SceneHelper.IsPlayingCustom)
-                __instance.targetLevelName = ResolveLevelName(__instance.targetLevelName);
-
-            return true;
-        }
-
-        //Gets the next boss level from the dictionary, if its not present, returns original.
-        public static string ResolveLevelName(string targetLevel)
-        {
-
-            if (levelAssociations.ContainsKey(targetLevel))
             {
-                string nextLevel = levelAssociations[targetLevel];
-                //Level 0-5 indicates the player has just completed P-2
-                if (nextLevel == "Level 0-5")
+                LevelChain chain = LevelChainManager.GetChainOfLevel(SceneHelper.CurrentScene);
+                
+                if(chain == null)
                 {
-                    ++BossRushController.Laps;
-                    StatRecords.SubmitRecord(BossRushController.GetCurrentStat());
+                    //Level has no chain!? What?
+                    BossRush.BepInExLogger.LogWarning($"Level {SceneHelper.CurrentScene} has no valid chain.");
+                    return true;
                 }
 
-                return nextLevel;
+                if (!string.IsNullOrEmpty(chain.PitTargetFilter) && __instance.targetLevelName != chain.PitTargetFilter)
+                {
+                    //This can happen if the player enters a secret level pit
+                    HudMessageReceiver.Instance.SendHudMessage("Sequence broken, boss rush mode disabled.");
+                    BossRushController.Reset();
+                }
+                else
+                {
+                    string nextLevel = chain.LevelTo;
+                    __instance.targetLevelName = nextLevel;
+
+                    //Increment laps if we're at the end of the chain.
+                    if (nextLevel == LevelChainManager.GetFirstLevelName())
+                    {
+                        ++BossRushController.Laps;
+                        StatRecords.SubmitRecord(BossRushController.GetCurrentStat());
+                    }
+                }
             }
 
-            //This can happen if the player enters a secret level pit
-            HudMessageReceiver.Instance.SendHudMessage("Sequence broken, boss rush mode disabled.");
-            BossRushController.Reset();
-
-            return targetLevel;
+            return true;
         }
     }
 
@@ -194,7 +183,7 @@ namespace BossRush
             if (canvasRectTransform == null)
                 return;
 
-            BossRush.Logr.LogInfo("Menu Spawned");
+            BossRush.BepInExLogger.LogInfo("Menu Spawned");
             GameObject.Instantiate(Assets.BossRushMenuPrefab, canvasRectTransform);
         }
 
@@ -205,7 +194,7 @@ namespace BossRush
             if (canvasRectTransform == null)
                 return;
 
-            BossRush.Logr.LogInfo("DeathScreen Spawned");
+            BossRush.BepInExLogger.LogInfo("DeathScreen Spawned");
             GameObject.Instantiate(Assets.BossRushDeathScreen, canvasRectTransform);
         }
 
@@ -214,7 +203,7 @@ namespace BossRush
         //Kind of icky but it works.
         private static void SpawnButton(CanvasController __instance)
         {
-            BossRush.Logr.LogInfo("Spawning Button");
+            BossRush.BepInExLogger.LogInfo("Spawning Button");
             RectTransform canvasRectTransform = __instance.GetComponent<RectTransform>();
             GameObject chapterSelectObject = canvasRectTransform.Find("Chapter Select").gameObject;
             if (chapterSelectObject == null)
@@ -252,7 +241,7 @@ namespace BossRush
             buttonPosition.y -= 55;
             bossRushButtonRectTransform.position = buttonPosition;
 
-            bossRushButtonRectTransform.GetComponentInChildren<Text>().text = "BOSS RUSH";
+            bossRushButtonRectTransform.GetComponentInChildren<TextMeshProUGUI>().text = "BOSS RUSH";
             bossRushButton.onClick.AddListener(BossRushMenu.Open);
         }
     }

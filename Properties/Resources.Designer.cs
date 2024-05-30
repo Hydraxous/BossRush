@@ -69,5 +69,17 @@ namespace BossRush.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///
+        ///}
+        ///.
+        /// </summary>
+        internal static string levelChainDefault {
+            get {
+                return ResourceManager.GetString("levelChainDefault", resourceCulture);
+            }
+        }
     }
 }

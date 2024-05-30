@@ -1,0 +1,63 @@
+{
+	"ModVersion": "1.1.3",
+	"LevelChains": [{
+		"LevelFrom": "Level 0-5",
+		"LevelTo": "Level 1-4",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 1-4",
+		"LevelTo": "Level 2-4",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 2-4",
+		"LevelTo": "Level 3-2",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 3-2",
+		"LevelTo": "Level 4-4",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 4-4",
+		"LevelTo": "Level 5-2",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 5-2",
+		"LevelTo": "Level 5-4",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 5-4",
+		"LevelTo": "Level 6-2",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 6-2",
+		"LevelTo": "Level 7-1",
+		"PitTargetFilter": "Intermission2"
+	},
+	{
+		"LevelFrom": "Level 7-1",
+		"LevelTo": "Level 7-4",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level 7-4",
+		"LevelTo": "Level P-1",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level P-1",
+		"LevelTo": "Level P-2",
+		"PitTargetFilter": ""
+	},
+	{
+		"LevelFrom": "Level P-2",
+		"LevelTo": "Level 0-5",
+		"PitTargetFilter": ""
+	}]
+}
